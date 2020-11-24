@@ -26,7 +26,8 @@ parser.add_argument("--epoch", type=int, default=0, help="epoch to start trainin
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--dataset_name", type=str, default="monet2photo", help="name of the dataset")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
-parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
+parser.add_argument("--lr", type=float, default=0.001, help="adam: learning rate")
+parser.add_argument("--d_lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
@@ -89,8 +90,8 @@ else:
 optimizer_G = torch.optim.Adam(
     itertools.chain(G_AB.parameters(), G_BA.parameters()), lr=opt.lr, betas=(opt.b1, opt.b2)
 )
-optimizer_D_A = torch.optim.Adam(D_A.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
-optimizer_D_B = torch.optim.Adam(D_B.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+optimizer_D_A = torch.optim.Adam(D_A.parameters(), lr=opt.d_lr, betas=(opt.b1, opt.b2))
+optimizer_D_B = torch.optim.Adam(D_B.parameters(), lr=opt.d_lr, betas=(opt.b1, opt.b2))
 
 # Learning rate update schedulers
 lr_scheduler_G = torch.optim.lr_scheduler.LambdaLR(
@@ -207,41 +208,42 @@ if __name__ == '__main__':
             loss_G.backward()
             optimizer_G.step()
 
-            # -----------------------
-            #  Train Discriminator A
-            # -----------------------
+            if i % 5 == 0:
+                # -----------------------
+                #  Train Discriminator A
+                # -----------------------
 
-            optimizer_D_A.zero_grad()
+                optimizer_D_A.zero_grad()
 
-            # Real loss
-            loss_real = criterion_GAN(D_A(real_A), valid)
-            # Fake loss (on batch of previously generated samples)
-            fake_A_ = fake_A_buffer.push_and_pop(fake_A)
-            loss_fake = criterion_GAN(D_A(fake_A_.detach()), fake)
-            # Total loss
-            loss_D_A = (loss_real + loss_fake) / 2
+                # Real loss
+                loss_real = criterion_GAN(D_A(real_A), valid)
+                # Fake loss (on batch of previously generated samples)
+                fake_A_ = fake_A_buffer.push_and_pop(fake_A)
+                loss_fake = criterion_GAN(D_A(fake_A_.detach()), fake)
+                # Total loss
+                loss_D_A = (loss_real + loss_fake) / 2
 
-            loss_D_A.backward()
-            optimizer_D_A.step()
+                loss_D_A.backward()
+                optimizer_D_A.step()
 
-            # -----------------------
-            #  Train Discriminator B
-            # -----------------------
+                # -----------------------
+                #  Train Discriminator B
+                # -----------------------
 
-            optimizer_D_B.zero_grad()
+                optimizer_D_B.zero_grad()
 
-            # Real loss
-            loss_real = criterion_GAN(D_B(real_B), valid)
-            # Fake loss (on batch of previously generated samples)
-            fake_B_ = fake_B_buffer.push_and_pop(fake_B)
-            loss_fake = criterion_GAN(D_B(fake_B_.detach()), fake)
-            # Total loss
-            loss_D_B = (loss_real + loss_fake) / 2
+                # Real loss
+                loss_real = criterion_GAN(D_B(real_B), valid)
+                # Fake loss (on batch of previously generated samples)
+                fake_B_ = fake_B_buffer.push_and_pop(fake_B)
+                loss_fake = criterion_GAN(D_B(fake_B_.detach()), fake)
+                # Total loss
+                loss_D_B = (loss_real + loss_fake) / 2
 
-            loss_D_B.backward()
-            optimizer_D_B.step()
+                loss_D_B.backward()
+                optimizer_D_B.step()
 
-            loss_D = (loss_D_A + loss_D_B) / 2
+                loss_D = (loss_D_A + loss_D_B) / 2
 
             # --------------
             #  Log Progress
