@@ -28,7 +28,7 @@ class ResidualBlock(nn.Module):
         return x + self.block(x)
 
 class GeneratorUNet3(nn.Module):
-    def __init__(self, n_channels=1, n_classes=1, bilinear=True, feature_scale=4,
+    def __init__(self, n_channels=3, n_classes=3, bilinear=True, feature_scale=4,
                  is_deconv=True, is_batchnorm=True):
         super(GeneratorUNet3, self).__init__()
         self.n_channels = n_channels
