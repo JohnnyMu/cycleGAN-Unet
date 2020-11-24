@@ -87,11 +87,11 @@ else:
     D_B.apply(weights_init_normal)
 
 # Optimizers
-optimizer_G = torch.optim.Adam(
-    itertools.chain(G_AB.parameters(), G_BA.parameters()), lr=opt.lr, betas=(opt.b1, opt.b2)
+optimizer_G = torch.optim.SGD(
+    itertools.chain(G_AB.parameters(), G_BA.parameters()), lr=opt.lr
 )
-optimizer_D_A = torch.optim.Adam(D_A.parameters(), lr=opt.d_lr, betas=(opt.b1, opt.b2))
-optimizer_D_B = torch.optim.Adam(D_B.parameters(), lr=opt.d_lr, betas=(opt.b1, opt.b2))
+optimizer_D_A = torch.optim.SGD(D_A.parameters(), lr=opt.d_lr)
+optimizer_D_B = torch.optim.SGD(D_B.parameters(), lr=opt.d_lr)
 
 # Learning rate update schedulers
 lr_scheduler_G = torch.optim.lr_scheduler.LambdaLR(
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             loss_G.backward()
             optimizer_G.step()
 
-            if i % 5 == 0:
+            if i % 8 == 0:
                 # -----------------------
                 #  Train Discriminator A
                 # -----------------------
