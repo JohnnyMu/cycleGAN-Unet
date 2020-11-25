@@ -41,23 +41,23 @@ class GeneratorUNet3(nn.Module):
 
         ## -------------Encoder--------------
         self.conv1 = unetConv2(self.n_channels, filters[0], self.is_batchnorm)
-        self.resBlock1 = ResidualBlock(filters[0])
+        # self.resBlock1 = ResidualBlock(filters[0])
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
 
         self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm)
-        self.resBlock2 = ResidualBlock(filters[1])
+        # self.resBlock2 = ResidualBlock(filters[1])
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
 
         self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm)
-        self.resBlock3 = ResidualBlock(filters[2])
+        # self.resBlock3 = ResidualBlock(filters[2])
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
 
         self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
-        self.resBlock4 = ResidualBlock(filters[3])
+        # self.resBlock4 = ResidualBlock(filters[3])
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
 
         self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
-        self.resBlock5 = ResidualBlock(filters[4])
+        # self.resBlock5 = ResidualBlock(filters[4])
         ## -------------Decoder--------------
         self.CatChannels = filters[0]
         self.CatBlocks = 5
@@ -210,27 +210,25 @@ class GeneratorUNet3(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 init_weights(m, init_type='kaiming')
-            elif isinstance(m, nn.InstanceNorm2d):
+            elif isinstance(m, nn.BatchNorm2d):
                 init_weights(m, init_type='kaiming')
 
     def forward(self, inputs):
         ## -------------Encoder-------------
-        h1 = self.resBlock1(self.resBlock1(self.conv1(inputs)))  # h1->320*320*64
+        h1 = self.conv1(inputs)  # h1->320*320*64
 
         h2 = self.maxpool1(h1)
-        h2 = self.resBlock2(self.resBlock2(self.conv2(h2)))  # h2->160*160*128
+        h2 = self.conv2(h2)  # h2->160*160*128
 
         h3 = self.maxpool2(h2)
         h3 = self.conv3(h3)  # h3->80*80*256
-        h3 = self.resBlock3(self.resBlock3(h3))
+
 
         h4 = self.maxpool3(h3)
         h4 = self.conv4(h4)  # h4->40*40*512
-        h4 = self.resBlock4(self.resBlock4(h4))
 
         h5 = self.maxpool4(h4)
         hd5 = self.conv5(h5)  # h5->20*20*1024
-        hd5 = self.resBlock5(self.resBlock5(hd5))
         ## -------------Decoder-------------
         h1_PT_hd4 = self.h1_PT_hd4_relu(self.h1_PT_hd4_bn(self.h1_PT_hd4_conv(self.h1_PT_hd4(h1))))
         h2_PT_hd4 = self.h2_PT_hd4_relu(self.h2_PT_hd4_bn(self.h2_PT_hd4_conv(self.h2_PT_hd4(h2))))
