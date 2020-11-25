@@ -54,9 +54,9 @@ class GeneratorUNet3(nn.Module):
 
         self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
         # self.resBlock4 = ResidualBlock(filters[3])
-        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
-
-        self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
+        # self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+        #
+        # self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
         # self.resBlock5 = ResidualBlock(filters[4])
         ## -------------Decoder--------------
         self.CatChannels = filters[0]
@@ -65,38 +65,38 @@ class GeneratorUNet3(nn.Module):
 
         '''stage 4d'''
         # h1->320*320, hd4->40*40, Pooling 8 times
-        self.h1_PT_hd4 = nn.MaxPool2d(8, 8, ceil_mode=True)
-        self.h1_PT_hd4_conv = nn.Conv2d(filters[0], self.CatChannels, 3, padding=1)
-        self.h1_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        self.h1_PT_hd4_relu = nn.ReLU(inplace=True)
-
-        # h2->160*160, hd4->40*40, Pooling 4 times
-        self.h2_PT_hd4 = nn.MaxPool2d(4, 4, ceil_mode=True)
-        self.h2_PT_hd4_conv = nn.Conv2d(filters[1], self.CatChannels, 3, padding=1)
-        self.h2_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        self.h2_PT_hd4_relu = nn.ReLU(inplace=True)
-
-        # h3->80*80, hd4->40*40, Pooling 2 times
-        self.h3_PT_hd4 = nn.MaxPool2d(2, 2, ceil_mode=True)
-        self.h3_PT_hd4_conv = nn.Conv2d(filters[2], self.CatChannels, 3, padding=1)
-        self.h3_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        self.h3_PT_hd4_relu = nn.ReLU(inplace=True)
-
-        # h4->40*40, hd4->40*40, Concatenation
-        self.h4_Cat_hd4_conv = nn.Conv2d(filters[3], self.CatChannels, 3, padding=1)
-        self.h4_Cat_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        self.h4_Cat_hd4_relu = nn.ReLU(inplace=True)
-
-        # hd5->20*20, hd4->40*40, Upsample 2 times
-        self.hd5_UT_hd4 = nn.Upsample(scale_factor=2, mode='bilinear')  # 14*14
-        self.hd5_UT_hd4_conv = nn.Conv2d(filters[4], self.CatChannels, 3, padding=1)
-        self.hd5_UT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        self.hd5_UT_hd4_relu = nn.ReLU(inplace=True)
-
-        # fusion(h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4)
-        self.conv4d_1 = nn.Conv2d(self.UpChannels, self.UpChannels, 3, padding=1)  # 16
-        self.bn4d_1 = nn.InstanceNorm2d(self.UpChannels)
-        self.relu4d_1 = nn.ReLU(inplace=True)
+        # self.h1_PT_hd4 = nn.MaxPool2d(8, 8, ceil_mode=True)
+        # self.h1_PT_hd4_conv = nn.Conv2d(filters[0], self.CatChannels, 3, padding=1)
+        # self.h1_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        # self.h1_PT_hd4_relu = nn.ReLU(inplace=True)
+        #
+        # # h2->160*160, hd4->40*40, Pooling 4 times
+        # self.h2_PT_hd4 = nn.MaxPool2d(4, 4, ceil_mode=True)
+        # self.h2_PT_hd4_conv = nn.Conv2d(filters[1], self.CatChannels, 3, padding=1)
+        # self.h2_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        # self.h2_PT_hd4_relu = nn.ReLU(inplace=True)
+        #
+        # # h3->80*80, hd4->40*40, Pooling 2 times
+        # self.h3_PT_hd4 = nn.MaxPool2d(2, 2, ceil_mode=True)
+        # self.h3_PT_hd4_conv = nn.Conv2d(filters[2], self.CatChannels, 3, padding=1)
+        # self.h3_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        # self.h3_PT_hd4_relu = nn.ReLU(inplace=True)
+        #
+        # # h4->40*40, hd4->40*40, Concatenation
+        # self.h4_Cat_hd4_conv = nn.Conv2d(filters[3], self.CatChannels, 3, padding=1)
+        # self.h4_Cat_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        # self.h4_Cat_hd4_relu = nn.ReLU(inplace=True)
+        #
+        # # hd5->20*20, hd4->40*40, Upsample 2 times
+        # self.hd5_UT_hd4 = nn.Upsample(scale_factor=2, mode='bilinear')  # 14*14
+        # self.hd5_UT_hd4_conv = nn.Conv2d(filters[4], self.CatChannels, 3, padding=1)
+        # self.hd5_UT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        # self.hd5_UT_hd4_relu = nn.ReLU(inplace=True)
+        #
+        # # fusion(h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4)
+        # self.conv4d_1 = nn.Conv2d(self.UpChannels, self.UpChannels, 3, padding=1)  # 16
+        # self.bn4d_1 = nn.InstanceNorm2d(self.UpChannels)
+        # self.relu4d_1 = nn.ReLU(inplace=True)
 
         '''stage 3d'''
         # h1->320*320, hd3->80*80, Pooling 4 times
@@ -265,6 +265,132 @@ class GeneratorUNet3(nn.Module):
         d1 = self.outconv1(hd1)  # d1->320*320*n_classes
         return F.sigmoid(d1)
 
+
+class unetUp(nn.Module):
+    def __init__(self, in_size, out_size, is_deconv, n_concat=2):
+        super(unetUp, self).__init__()
+        self.conv = unetConv2(out_size * 2, out_size, False)
+
+        if is_deconv:
+            self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=4, stride=2, padding=1)
+        else:
+            self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+
+        # initialise the blocks
+        for m in self.children():
+            if m.__class__.__name__.find('unetConv2') != -1: continue
+            init_weights(m, init_type='kaiming')
+
+    def forward(self, inputs0, *input):
+        outputs0 = self.up(inputs0)
+        for i in range(len(input)):
+            outputs0 = torch.cat([outputs0, input[i]], 1)
+        return self.conv(outputs0)
+
+
+class GeneratorUNet(nn.Module):
+    def __init__(self, n_channels=1, n_classes=1, bilinear=True, feature_scale=4,
+                 is_deconv=True, is_batchnorm=True):
+        super(GeneratorUNet, self).__init__()
+        self.n_channels = n_channels
+        self.n_classes = n_classes
+        self.bilinear = bilinear
+        self.feature_scale = feature_scale
+        self.is_deconv = is_deconv
+        self.is_batchnorm = is_batchnorm
+        filters = [64, 128, 256, 512, 1024]
+
+        # downsampling
+        self.conv1 = unetConv2(self.n_channels, filters[0], self.is_batchnorm) # 128*128*64
+        self.resBlock1 = ResidualBlock(filters[0])
+        self.down1 = nn.Sequential(nn.Conv2d(filters[0], filters[0], 4, 2, 1),
+                                     nn.InstanceNorm2d(filters[0]), nn.LeakyReLU(inplace=True), )
+        # self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm)
+        self.resBlock2 = ResidualBlock(filters[1])
+        self.down2 = nn.Sequential(nn.Conv2d(filters[1], filters[1], 4, 2, 1),
+                                   nn.InstanceNorm2d(filters[1]), nn.LeakyReLU(inplace=True), )
+        # self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+
+        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm)
+        self.resBlock3 = ResidualBlock(filters[2])
+        self.down3 = nn.Sequential(nn.Conv2d(filters[2], filters[2], 4, 2, 1),
+                                   nn.InstanceNorm2d(filters[2]), nn.LeakyReLU(inplace=True), )
+        # self.maxpool3 = nn.MaxPool2d(kernel_size=2)
+
+        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
+        self.resBlock4 = ResidualBlock(filters[3])
+        self.down4 = nn.Sequential(nn.Conv2d(filters[3], filters[3], 4, 2, 1),
+                                   nn.InstanceNorm2d(filters[3]), nn.LeakyReLU(inplace=True), )
+        # self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+
+        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm)
+        self.resBlock5 = ResidualBlock(filters[4])
+
+        # upsampling
+        self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
+        self.up_concat3 = unetUp(filters[3], filters[2], self.is_deconv)
+        self.up_concat2 = unetUp(filters[2], filters[1], self.is_deconv)
+        self.up_concat1 = unetUp(filters[1], filters[0], self.is_deconv)
+        self.outconv1 = nn.Conv2d(filters[0], 1, 1)
+
+        # initialise weights
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                init_weights(m, init_type='kaiming')
+            elif isinstance(m, nn.BatchNorm2d):
+                init_weights(m, init_type='kaiming')
+
+
+    def dotProduct(self,seg,cls):
+        B, N, H, W = seg.size()
+        seg = seg.view(B, N, H * W)
+        final = torch.einsum("ijk,ij->ijk", [seg, cls])
+        final = final.view(B, N, H, W)
+        return final
+
+
+    def forward(self, inputs):
+
+        conv1 = self.conv1(inputs)  # 16*512*1024
+        conv1 = self.resBlock1(conv1)
+        maxpool1 = self.down1(conv1)  # 16*256*512
+        # maxpool1 = self.maxpool1(conv1)  # 16*256*512
+
+        conv2 = self.conv2(maxpool1)  # 32*256*512
+        conv2 = self.resBlock2(conv2)
+        maxpool2 = self.down2(conv2)  # 32*128*256
+        # maxpool2 = self.maxpool2(conv2)  # 32*128*256
+
+        conv3 = self.conv3(maxpool2)  # 64*128*256
+        conv3 = self.resBlock3(conv3)
+        maxpool3 = self.down3(conv3)  # 64*64*128
+        # maxpool3 = self.maxpool3(conv3)  # 64*64*128
+
+        conv4 = self.conv4(maxpool3)  # 128*64*128
+        conv4 = self.resBlock4(conv4)
+        maxpool4 = self.down4(conv4)  # 128*32*64
+        # maxpool4 = self.maxpool4(conv4)  # 128*32*64
+
+        center = self.center(maxpool4)  # 256*32*64
+        center = self.resBlock5(center)
+
+        up4 = self.up_concat4(center, conv4)  # 128*64*128
+        up4 = self.resBlock4(up4)
+
+        up3 = self.up_concat3(up4, conv3)  # 64*128*256
+        up3 = self.resBlock3(up3)
+
+        up2 = self.up_concat2(up3, conv2)  # 32*256*512
+        up2 = self.resBlock2(up2)
+
+        up1 = self.up_concat1(up2, conv1)  # 16*512*1024
+        up1 = self.resBlock1(up1)
+
+        d1 = self.outconv1(up1)  # 256
+
+        return d1
 class GeneratorResNet(nn.Module):
     def __init__(self, input_shape, num_residual_blocks):
         super(GeneratorResNet, self).__init__()
@@ -352,7 +478,9 @@ class Discriminator(nn.Module):
 def weights_init_normal(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        init.normal_(m.weight.data, 0.0, 0.02)
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+        if hasattr(m, "bias") and m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
     elif classname.find('Linear') != -1:
         init.normal_(m.weight.data, 0.0, 0.02)
     elif classname.find('BatchNorm') != -1:
@@ -363,7 +491,9 @@ def weights_init_normal(m):
 def weights_init_xavier(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        init.xavier_normal_(m.weight.data, gain=1)
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+        if hasattr(m, "bias") and m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
     elif classname.find('Linear') != -1:
         init.xavier_normal_(m.weight.data, gain=1)
     elif classname.find('BatchNorm') != -1:
@@ -374,7 +504,9 @@ def weights_init_xavier(m):
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+        if hasattr(m, "bias") and m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
     elif classname.find('Linear') != -1:
         init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
     elif classname.find('BatchNorm') != -1:
@@ -385,7 +517,9 @@ def weights_init_kaiming(m):
 def weights_init_orthogonal(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        init.orthogonal_(m.weight.data, gain=1)
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+        if hasattr(m, "bias") and m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
     elif classname.find('Linear') != -1:
         init.orthogonal_(m.weight.data, gain=1)
     elif classname.find('BatchNorm') != -1:
@@ -406,7 +540,7 @@ def init_weights(net, init_type='normal'):
 
 
 class unetConv2(nn.Module):
-    def __init__(self, in_size, out_size, is_batchnorm, n=2, ks=3, stride=1, padding=1):
+    def __init__(self, in_size, out_size, is_batchnorm, n=1, ks=3, stride=1, padding=1):
         super(unetConv2, self).__init__()
         self.n = n
         self.ks = ks

@@ -40,6 +40,8 @@ parser.add_argument("--checkpoint_interval", type=int, default=-1, help="interva
 parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
 parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
+parser.add_argument("--n_d_train", type=int, default=1, help="")
+
 opt = parser.parse_args()
 print(opt)
 
@@ -59,8 +61,11 @@ input_shape = (opt.channels, opt.img_height, opt.img_width)
 # Initialize generator and discriminator
 # G_AB = GeneratorResNet(input_shape, opt.n_residual_blocks)
 # G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
-G_AB = GeneratorUNet3()
-G_BA = GeneratorUNet3()
+# G_AB = GeneratorUNet3()
+# G_BA = GeneratorUNet3()
+G_AB = GeneratorUNet()
+G_BA = GeneratorUNet()
+
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
 
@@ -116,7 +121,7 @@ transforms_ = [
     transforms.RandomCrop((opt.img_height, opt.img_width)),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transforms.Normalize((0.5), (0.5)),
 ]
 
 # Training data loader
@@ -208,7 +213,8 @@ if __name__ == '__main__':
             loss_G.backward()
             optimizer_G.step()
 
-            if i % 8 == 0:
+            # if ((epoch <= 1) & (i < 3) )| (epoch > 4):
+            if i % opt.n_d_train :
                 # -----------------------
                 #  Train Discriminator A
                 # -----------------------
