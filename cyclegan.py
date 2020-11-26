@@ -26,7 +26,7 @@ parser.add_argument("--epoch", type=int, default=0, help="epoch to start trainin
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--dataset_name", type=str, default="monet2photo", help="name of the dataset")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
-parser.add_argument("--lr", type=float, default=0.001, help="adam: learning rate")
+parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--d_lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
@@ -40,7 +40,6 @@ parser.add_argument("--checkpoint_interval", type=int, default=-1, help="interva
 parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
 parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
-parser.add_argument("--n_d_train", type=int, default=1, help="")
 
 opt = parser.parse_args()
 print(opt)
@@ -63,8 +62,11 @@ input_shape = (opt.channels, opt.img_height, opt.img_width)
 # G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
 # G_AB = GeneratorUNet3()
 # G_BA = GeneratorUNet3()
-G_AB = GeneratorUNet()
-G_BA = GeneratorUNet()
+G_AB = GeneratorUNet(opt.channels)
+G_BA = GeneratorUNet(opt.channels)
+
+# G_AB = Generator(opt.channels, 16, opt.channels)
+# G_BA = Generator(opt.channels, 16, opt.channels)
 
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
@@ -116,13 +118,23 @@ fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
 # Image transformations
-transforms_ = [
-    transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
-    transforms.RandomCrop((opt.img_height, opt.img_width)),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5), (0.5)),
-]
+if opt.channels == 3:
+    transforms_ = [
+        transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
+        transforms.RandomCrop((opt.img_height, opt.img_width)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]
+if opt.channels == 1:
+    transforms_ = [
+        transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
+        transforms.RandomCrop((opt.img_height, opt.img_width)),
+        transforms.Grayscale(num_output_channels=1),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, ), (0.5, )),
+    ]
 
 # Training data loader
 dataloader = DataLoader(
@@ -214,42 +226,42 @@ if __name__ == '__main__':
             optimizer_G.step()
 
             # if ((epoch <= 1) & (i < 3) )| (epoch > 4):
-            if i % opt.n_d_train :
-                # -----------------------
-                #  Train Discriminator A
-                # -----------------------
 
-                optimizer_D_A.zero_grad()
+            # -----------------------
+            #  Train Discriminator A
+            # -----------------------
 
-                # Real loss
-                loss_real = criterion_GAN(D_A(real_A), valid)
-                # Fake loss (on batch of previously generated samples)
-                fake_A_ = fake_A_buffer.push_and_pop(fake_A)
-                loss_fake = criterion_GAN(D_A(fake_A_.detach()), fake)
-                # Total loss
-                loss_D_A = (loss_real + loss_fake) / 2
+            optimizer_D_A.zero_grad()
 
-                loss_D_A.backward()
-                optimizer_D_A.step()
+            # Real loss
+            loss_real = criterion_GAN(D_A(real_A), valid)
+            # Fake loss (on batch of previously generated samples)
+            fake_A_ = fake_A_buffer.push_and_pop(fake_A)
+            loss_fake = criterion_GAN(D_A(fake_A_.detach()), fake)
+            # Total loss
+            loss_D_A = (loss_real + loss_fake) / 2
 
-                # -----------------------
-                #  Train Discriminator B
-                # -----------------------
+            loss_D_A.backward()
+            optimizer_D_A.step()
 
-                optimizer_D_B.zero_grad()
+            # -----------------------
+            #  Train Discriminator B
+            # -----------------------
 
-                # Real loss
-                loss_real = criterion_GAN(D_B(real_B), valid)
-                # Fake loss (on batch of previously generated samples)
-                fake_B_ = fake_B_buffer.push_and_pop(fake_B)
-                loss_fake = criterion_GAN(D_B(fake_B_.detach()), fake)
-                # Total loss
-                loss_D_B = (loss_real + loss_fake) / 2
+            optimizer_D_B.zero_grad()
 
-                loss_D_B.backward()
-                optimizer_D_B.step()
+            # Real loss
+            loss_real = criterion_GAN(D_B(real_B), valid)
+            # Fake loss (on batch of previously generated samples)
+            fake_B_ = fake_B_buffer.push_and_pop(fake_B)
+            loss_fake = criterion_GAN(D_B(fake_B_.detach()), fake)
+            # Total loss
+            loss_D_B = (loss_real + loss_fake) / 2
 
-                loss_D = (loss_D_A + loss_D_B) / 2
+            loss_D_B.backward()
+            optimizer_D_B.step()
+
+            loss_D = (loss_D_A + loss_D_B) / 2
 
             # --------------
             #  Log Progress

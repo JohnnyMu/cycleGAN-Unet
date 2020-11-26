@@ -281,20 +281,21 @@ class unetUp(nn.Module):
             if m.__class__.__name__.find('unetConv2') != -1: continue
             init_weights(m, init_type='kaiming')
 
+        self.resBlock = ResidualBlock(out_size)
+
     def forward(self, inputs0, *input):
         outputs0 = self.up(inputs0)
         for i in range(len(input)):
             outputs0 = torch.cat([outputs0, input[i]], 1)
-        return self.conv(outputs0)
+        outputs1 = self.conv(outputs0)
+        return self.resBlock(outputs1)
 
 
 class GeneratorUNet(nn.Module):
-    def __init__(self, n_channels=1, n_classes=1, bilinear=True, feature_scale=4,
+    def __init__(self, n_channels, feature_scale=4,
                  is_deconv=True, is_batchnorm=True):
         super(GeneratorUNet, self).__init__()
         self.n_channels = n_channels
-        self.n_classes = n_classes
-        self.bilinear = bilinear
         self.feature_scale = feature_scale
         self.is_deconv = is_deconv
         self.is_batchnorm = is_batchnorm
@@ -327,13 +328,13 @@ class GeneratorUNet(nn.Module):
 
         self.center = unetConv2(filters[3], filters[4], self.is_batchnorm)
         self.resBlock5 = ResidualBlock(filters[4])
-
+        self.resBlockDeep = ResidualBlock(filters[4])
         # upsampling
         self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
         self.up_concat3 = unetUp(filters[3], filters[2], self.is_deconv)
         self.up_concat2 = unetUp(filters[2], filters[1], self.is_deconv)
         self.up_concat1 = unetUp(filters[1], filters[0], self.is_deconv)
-        self.outconv1 = nn.Conv2d(filters[0], 1, 1)
+        self.outconv1 = nn.Conv2d(filters[0], n_channels, 1)
 
         # initialise weights
         for m in self.modules():
@@ -375,6 +376,7 @@ class GeneratorUNet(nn.Module):
 
         center = self.center(maxpool4)  # 256*32*64
         center = self.resBlock5(center)
+        center = self.resBlockDeep(center)
 
         up4 = self.up_concat4(center, conv4)  # 128*64*128
         up4 = self.resBlock4(up4)
