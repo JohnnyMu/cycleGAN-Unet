@@ -40,6 +40,7 @@ parser.add_argument("--checkpoint_interval", type=int, default=-1, help="interva
 parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
 parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
+parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
 
 opt = parser.parse_args()
 print(opt)
@@ -58,12 +59,14 @@ cuda = torch.cuda.is_available()
 input_shape = (opt.channels, opt.img_height, opt.img_width)
 
 # Initialize generator and discriminator
-# G_AB = GeneratorResNet(input_shape, opt.n_residual_blocks)
-# G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
+if opt.g_type == 1:
+    G_AB = GeneratorResNet(input_shape, opt.n_residual_blocks)
+    G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
 # G_AB = GeneratorUNet3()
 # G_BA = GeneratorUNet3()
-G_AB = GeneratorUNet(opt.channels)
-G_BA = GeneratorUNet(opt.channels)
+if opt.g_type == 2:
+    G_AB = GeneratorUNet(opt.channels)
+    G_BA = GeneratorUNet(opt.channels)
 
 # G_AB = Generator(opt.channels, 16, opt.channels)
 # G_BA = Generator(opt.channels, 16, opt.channels)
