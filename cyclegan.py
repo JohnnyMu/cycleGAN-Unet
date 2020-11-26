@@ -62,6 +62,8 @@ input_shape = (opt.channels, opt.img_height, opt.img_width)
 if opt.g_type == 1:
     G_AB = GeneratorResNet(input_shape, opt.n_residual_blocks)
     G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
+    G_AB.apply(weights_init_normal)
+    G_BA.apply(weights_init_normal)
 # G_AB = GeneratorUNet3()
 # G_BA = GeneratorUNet3()
 if opt.g_type == 2:
@@ -91,8 +93,7 @@ if opt.epoch != 0:
     D_B.load_state_dict(torch.load("saved_models/%s/D_B_%d.pth" % (opt.dataset_name, opt.epoch)))
 else:
     # Initialize weights
-    # G_AB.apply(weights_init_normal)
-    # G_BA.apply(weights_init_normal)
+
     D_A.apply(weights_init_normal)
     D_B.apply(weights_init_normal)
 

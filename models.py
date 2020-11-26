@@ -299,7 +299,7 @@ class GeneratorUNet(nn.Module):
         self.feature_scale = feature_scale
         self.is_deconv = is_deconv
         self.is_batchnorm = is_batchnorm
-        filters = [64, 128, 256, 512, 1024]
+        filters = [16, 32, 64, 128, 256]
 
         # downsampling
         self.conv1 = unetConv2(self.n_channels, filters[0], self.is_batchnorm) # 128*128*64
