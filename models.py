@@ -577,7 +577,7 @@ class unetConv2(nn.Module):
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
+    if classname.find("Conv2d") != -1:
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         if hasattr(m, "bias") and m.bias is not None:
             torch.nn.init.constant_(m.bias.data, 0.0)

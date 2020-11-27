@@ -16,6 +16,8 @@ from torch.autograd import Variable
 from models import *
 from datasets import *
 from utils import *
+from generator import *
+from discriminator import *
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -69,10 +71,17 @@ if opt.g_type == 1:
 if opt.g_type == 2:
     G_AB = GeneratorUNet(opt.channels)
     G_BA = GeneratorUNet(opt.channels)
-
+if opt.g_type == 3:
+    G_AB = Unet2(opt.channels, opt.channels)
+    G_BA = Unet2(opt.channels, opt.channels)
+    G_AB.apply(weights_init_normal)
+    G_BA.apply(weights_init_normal)
 # G_AB = Generator(opt.channels, 16, opt.channels)
 # G_BA = Generator(opt.channels, 16, opt.channels)
-
+# if opt.g_type == 3:
+#     D_A = DiscriminatorUnet(opt.channels)
+#     D_B = DiscriminatorUnet(opt.channels)
+# else:
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
 
@@ -98,11 +107,11 @@ else:
     D_B.apply(weights_init_normal)
 
 # Optimizers
-optimizer_G = torch.optim.SGD(
-    itertools.chain(G_AB.parameters(), G_BA.parameters()), lr=opt.lr
+optimizer_G = torch.optim.Adam(
+    itertools.chain(G_AB.parameters(), G_BA.parameters()), lr=opt.lr, betas=(opt.b1, opt.b2)
 )
-optimizer_D_A = torch.optim.SGD(D_A.parameters(), lr=opt.d_lr)
-optimizer_D_B = torch.optim.SGD(D_B.parameters(), lr=opt.d_lr)
+optimizer_D_A = torch.optim.Adam(D_A.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+optimizer_D_B = torch.optim.Adam(D_B.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 
 # Learning rate update schedulers
 lr_scheduler_G = torch.optim.lr_scheduler.LambdaLR(
