@@ -82,6 +82,9 @@ if opt.g_type == 3:
 #     D_A = DiscriminatorUnet(opt.channels)
 #     D_B = DiscriminatorUnet(opt.channels)
 # else:
+if opt.g_type == 4:
+    G_AB = GeneratorUNet3(opt.channels,opt.channels)
+    G_BA = GeneratorUNet3(opt.channels,opt.channels)
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
 

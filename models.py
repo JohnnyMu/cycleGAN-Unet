@@ -54,9 +54,9 @@ class GeneratorUNet3(nn.Module):
 
         self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
         # self.resBlock4 = ResidualBlock(filters[3])
-        # self.maxpool4 = nn.MaxPool2d(kernel_size=2)
-        #
-        # self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
+        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+
+        self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
         # self.resBlock5 = ResidualBlock(filters[4])
         ## -------------Decoder--------------
         self.CatChannels = filters[0]
@@ -65,38 +65,38 @@ class GeneratorUNet3(nn.Module):
 
         '''stage 4d'''
         # h1->320*320, hd4->40*40, Pooling 8 times
-        # self.h1_PT_hd4 = nn.MaxPool2d(8, 8, ceil_mode=True)
-        # self.h1_PT_hd4_conv = nn.Conv2d(filters[0], self.CatChannels, 3, padding=1)
-        # self.h1_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        # self.h1_PT_hd4_relu = nn.ReLU(inplace=True)
-        #
-        # # h2->160*160, hd4->40*40, Pooling 4 times
-        # self.h2_PT_hd4 = nn.MaxPool2d(4, 4, ceil_mode=True)
-        # self.h2_PT_hd4_conv = nn.Conv2d(filters[1], self.CatChannels, 3, padding=1)
-        # self.h2_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        # self.h2_PT_hd4_relu = nn.ReLU(inplace=True)
-        #
-        # # h3->80*80, hd4->40*40, Pooling 2 times
-        # self.h3_PT_hd4 = nn.MaxPool2d(2, 2, ceil_mode=True)
-        # self.h3_PT_hd4_conv = nn.Conv2d(filters[2], self.CatChannels, 3, padding=1)
-        # self.h3_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        # self.h3_PT_hd4_relu = nn.ReLU(inplace=True)
-        #
-        # # h4->40*40, hd4->40*40, Concatenation
-        # self.h4_Cat_hd4_conv = nn.Conv2d(filters[3], self.CatChannels, 3, padding=1)
-        # self.h4_Cat_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        # self.h4_Cat_hd4_relu = nn.ReLU(inplace=True)
-        #
-        # # hd5->20*20, hd4->40*40, Upsample 2 times
-        # self.hd5_UT_hd4 = nn.Upsample(scale_factor=2, mode='bilinear')  # 14*14
-        # self.hd5_UT_hd4_conv = nn.Conv2d(filters[4], self.CatChannels, 3, padding=1)
-        # self.hd5_UT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
-        # self.hd5_UT_hd4_relu = nn.ReLU(inplace=True)
-        #
-        # # fusion(h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4)
-        # self.conv4d_1 = nn.Conv2d(self.UpChannels, self.UpChannels, 3, padding=1)  # 16
-        # self.bn4d_1 = nn.InstanceNorm2d(self.UpChannels)
-        # self.relu4d_1 = nn.ReLU(inplace=True)
+        self.h1_PT_hd4 = nn.MaxPool2d(8, 8, ceil_mode=True)
+        self.h1_PT_hd4_conv = nn.Conv2d(filters[0], self.CatChannels, 3, padding=1)
+        self.h1_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        self.h1_PT_hd4_relu = nn.ReLU(inplace=True)
+
+        # h2->160*160, hd4->40*40, Pooling 4 times
+        self.h2_PT_hd4 = nn.MaxPool2d(4, 4, ceil_mode=True)
+        self.h2_PT_hd4_conv = nn.Conv2d(filters[1], self.CatChannels, 3, padding=1)
+        self.h2_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        self.h2_PT_hd4_relu = nn.ReLU(inplace=True)
+
+        # h3->80*80, hd4->40*40, Pooling 2 times
+        self.h3_PT_hd4 = nn.MaxPool2d(2, 2, ceil_mode=True)
+        self.h3_PT_hd4_conv = nn.Conv2d(filters[2], self.CatChannels, 3, padding=1)
+        self.h3_PT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        self.h3_PT_hd4_relu = nn.ReLU(inplace=True)
+
+        # h4->40*40, hd4->40*40, Concatenation
+        self.h4_Cat_hd4_conv = nn.Conv2d(filters[3], self.CatChannels, 3, padding=1)
+        self.h4_Cat_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        self.h4_Cat_hd4_relu = nn.ReLU(inplace=True)
+
+        # hd5->20*20, hd4->40*40, Upsample 2 times
+        self.hd5_UT_hd4 = nn.Upsample(scale_factor=2, mode='bilinear')  # 14*14
+        self.hd5_UT_hd4_conv = nn.Conv2d(filters[4], self.CatChannels, 3, padding=1)
+        self.hd5_UT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
+        self.hd5_UT_hd4_relu = nn.ReLU(inplace=True)
+
+        # fusion(h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4)
+        self.conv4d_1 = nn.Conv2d(self.UpChannels, self.UpChannels, 3, padding=1)  # 16
+        self.bn4d_1 = nn.InstanceNorm2d(self.UpChannels)
+        self.relu4d_1 = nn.ReLU(inplace=True)
 
         '''stage 3d'''
         # h1->320*320, hd3->80*80, Pooling 4 times
