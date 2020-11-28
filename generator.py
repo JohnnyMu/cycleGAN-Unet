@@ -64,31 +64,39 @@ class CropConcat(torch.nn.Module):
 
 
 class UpBlock(torch.nn.Module):
-    def __init__(self,input_channel, output_channel,batch_normalization=True,downsample = False):
+    def __init__(self, input_channel, output_channel, maxpooling, batch_normalization=True, downsample=False):
         super(UpBlock, self).__init__()
+        self.maxpooling = maxpooling
         self.downsample = downsample
-        self.conv = ConvBlock(input_channel,output_channel,batch_normalization=batch_normalization)
+        self.conv = ConvBlock(input_channel, output_channel, batch_normalization=batch_normalization)
         self.downsampling = DownSample()
-
-    def forward(self,x):
+        self.downsamplingconv = torch.nn.Conv2d(output_channel, output_channel, 4, 2, 1)
+    def forward(self, x):
         x1 = self.conv(x)
         if self.downsample:
-            x = self.downsampling(x1)
+            if self.maxpooling == 1:
+                x = self.downsampling(x1)
+            else:
+                x = self.downsamplingconv(x1)
         else:
             x = x1
-        return x,x1
+        return x, x1
 
 class DownBlock(torch.nn.Module):
-    def __init__(self,input_channel, output_channel,batch_normalization=True,Upsample = False):
+    def __init__(self,input_channel, output_channel, maxpooling, batch_normalization=True, Upsample = False):
         super(DownBlock, self).__init__()
+        self.maxpooling = maxpooling
         self.Upsample = Upsample
-        self.conv = ConvBlock(input_channel,output_channel,batch_normalization=batch_normalization)
+        self.conv = ConvBlock(input_channel, output_channel, batch_normalization=batch_normalization)
         self.upsampling = UpSample()
         self.crop = CropConcat()
-
+        self.upsamplingconv = torch.nn.ConvTranspose2d(output_channel * 2, output_channel * 2, kernel_size=4, stride=2, padding=1)
     def forward(self,x,y):
         if self.Upsample:
-            x = self.upsampling(x)
+            if self.maxpooling ==1:
+                x = self.upsampling(x)
+            else:
+                x = self.upsamplingconv(x)
         x = self.crop(y,x)
         x = self.conv(x)
         return x
@@ -152,20 +160,20 @@ class Unet(torch.nn.Module):
         return x
 
 class Unet2(torch.nn.Module):
-    def __init__(self,input_channel,output_channel,change_size=True):
+    def __init__(self,input_channel,output_channel,is_maxpooling = 1, change_size=True):
         super(Unet2, self).__init__()
         #Down Blocks
-        self.upblock1 = UpBlock(input_channel,64,downsample= change_size)
-        self.upblock2 = UpBlock(64,128,downsample= change_size)
-        self.upblock3 = UpBlock(128,256,downsample= change_size)
-        self.upblock4 = UpBlock(256,512,downsample= change_size)
-        self.upblock5 = UpBlock(512,1024,downsample= change_size)
+        self.upblock1 = UpBlock(input_channel,64, maxpooling = is_maxpooling, downsample= change_size)
+        self.upblock2 = UpBlock(64,128, maxpooling = is_maxpooling, downsample= change_size)
+        self.upblock3 = UpBlock(128,256, maxpooling = is_maxpooling, downsample= change_size)
+        self.upblock4 = UpBlock(256,512, maxpooling = is_maxpooling, downsample= change_size)
+        self.upblock5 = UpBlock(512,1024, maxpooling = is_maxpooling, downsample= change_size)
 
         #Up Blocks
-        self.downblock1 = DownBlock(1024+512, 512,Upsample= change_size)
-        self.downblock2 = DownBlock(512+256, 256,Upsample= change_size)
-        self.downblock3 = DownBlock(256+128, 128,Upsample= change_size)
-        self.downblock4 = DownBlock(128+64, 64,Upsample= change_size)
+        self.downblock1 = DownBlock(1024+512, 512, maxpooling = is_maxpooling, Upsample= change_size)
+        self.downblock2 = DownBlock(512+256, 256, maxpooling = is_maxpooling, Upsample= change_size)
+        self.downblock3 = DownBlock(256+128, 128, maxpooling = is_maxpooling, Upsample= change_size)
+        self.downblock4 = DownBlock(128+64, 64, maxpooling = is_maxpooling, Upsample= change_size)
 
         #Last convolution
         self.last_conv = torch.nn.Conv2d(64,output_channel,1)

@@ -43,6 +43,8 @@ parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of 
 parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
 parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
+parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 false")
+
 
 opt = parser.parse_args()
 print(opt)
@@ -72,8 +74,8 @@ if opt.g_type == 2:
     G_AB = GeneratorUNet(opt.channels)
     G_BA = GeneratorUNet(opt.channels)
 if opt.g_type == 3:
-    G_AB = Unet2(opt.channels, opt.channels)
-    G_BA = Unet2(opt.channels, opt.channels)
+    G_AB = Unet2(opt.channels, opt.channels, opt.is_maxpooling)
+    G_BA = Unet2(opt.channels, opt.channels, opt.is_maxpooling)
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 # G_AB = Generator(opt.channels, 16, opt.channels)
