@@ -43,18 +43,22 @@ class GeneratorUNet3(nn.Module):
         self.conv1 = unetConv2(self.n_channels, filters[0], self.is_batchnorm)
         # self.resBlock1 = ResidualBlock(filters[0])
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        self.downsampling1 = nn.Conv2d(filters[0], filters[0], 4, 2, 1)
 
         self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm)
         # self.resBlock2 = ResidualBlock(filters[1])
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        self.downsampling2 = nn.Conv2d(filters[1], filters[1], 4, 2, 1)
 
         self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm)
         # self.resBlock3 = ResidualBlock(filters[2])
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
+        self.downsampling3 = nn.Conv2d(filters[2], filters[2], 4, 2, 1)
 
         self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
         # self.resBlock4 = ResidualBlock(filters[3])
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+        self.downsampling4 = nn.Conv2d(filters[3], filters[3], 4, 2, 1)
 
         self.conv5 = unetConv2(filters[3], filters[4], self.is_batchnorm)
         # self.resBlock5 = ResidualBlock(filters[4])
@@ -89,6 +93,7 @@ class GeneratorUNet3(nn.Module):
 
         # hd5->20*20, hd4->40*40, Upsample 2 times
         self.hd5_UT_hd4 = nn.Upsample(scale_factor=2, mode='bilinear')  # 14*14
+        self.hd5_UT_hd4_convT = nn.ConvTranspose2d(filters[4], filters[4], kernel_size=4, stride=2, padding=1)
         self.hd5_UT_hd4_conv = nn.Conv2d(filters[4], self.CatChannels, 3, padding=1)
         self.hd5_UT_hd4_bn = nn.InstanceNorm2d(self.CatChannels)
         self.hd5_UT_hd4_relu = nn.ReLU(inplace=True)

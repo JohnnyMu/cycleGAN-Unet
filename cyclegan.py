@@ -18,6 +18,7 @@ from datasets import *
 from utils import *
 from generator import *
 from discriminator import *
+from DenseGenerator import *
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -89,7 +90,11 @@ if opt.g_type == 4:
     G_BA = GeneratorUNet3(opt.channels,opt.channels)
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
-
+if opt.g_type == 5:
+    G_AB = DenseUnet(opt.channels, opt.channels)
+    G_BA = DenseUnet(opt.channels, opt.channels)
+    G_AB.apply(weights_init_normal)
+    G_BA.apply(weights_init_normal)
 if cuda:
     G_AB = G_AB.cuda()
     G_BA = G_BA.cuda()
