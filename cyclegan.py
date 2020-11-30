@@ -45,6 +45,7 @@ parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss w
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
 parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
 parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 false")
+parser.add_argument("--maxpool", type=bool, default=True, help="1 true 2 false")
 
 
 opt = parser.parse_args()
@@ -91,8 +92,8 @@ if opt.g_type == 4:
 D_A = Discriminator(input_shape)
 D_B = Discriminator(input_shape)
 if opt.g_type == 5:
-    G_AB = DenseUnet(opt.channels, opt.channels)
-    G_BA = DenseUnet(opt.channels, opt.channels)
+    G_AB = DenseUnet(opt.channels, opt.channels, maxpool=opt.maxpool)
+    G_BA = DenseUnet(opt.channels, opt.channels, maxpool=opt.maxpool)
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
