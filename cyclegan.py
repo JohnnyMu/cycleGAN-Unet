@@ -20,7 +20,7 @@ from generator import *
 from discriminator import *
 from DenseGenerator import *
 from newGenerator import *
-
+from denselyUnet import *
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -101,6 +101,11 @@ if opt.g_type == 5:
 if opt.g_type == 6:
     G_AB = GeneratorDenseNet(input_shape, opt.n_residual_blocks)
     G_BA = GeneratorDenseNet(input_shape, opt.n_residual_blocks)
+    G_AB.apply(weights_init_normal)
+    G_BA.apply(weights_init_normal)
+if opt.g_type == 7:
+    G_AB = denselyUnet(opt.channels, opt.channels)
+    G_BA = denselyUnet(opt.channels, opt.channels)
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
