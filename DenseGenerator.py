@@ -122,24 +122,24 @@ class DenseUnet(torch.nn.Module):
                                                        self.nb_filter + self.growth_rate * 4 * 4, kernel_size=4, stride=2,
                                                        padding=1)
         self.convup1 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 3, self.nb_filter + self.growth_rate * 4 * 4, 1)
-        self.convup2 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 4, self.nb_filter + self.growth_rate * 4 * 2, 3, padding=1)
+        self.convup2 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 4 * 2, self.nb_filter + self.growth_rate * 4 * 2, 3, padding=1)
         self.batchnorm2 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4 * 2)
         self.upsamplingconv2 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4 * 2,
                                                         self.nb_filter + self.growth_rate * 4 * 2, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup3 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2, self.nb_filter + self.growth_rate * 4, 3, padding=1)
+        self.convup3 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2 * 2, self.nb_filter + self.growth_rate * 4, 3, padding=1)
         self.batchnorm3 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4)
         self.upsamplingconv3 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4,
                                                         self.nb_filter + self.growth_rate * 4, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup4 = nn.Conv2d(self.nb_filter + self.growth_rate * 4, 96, 3, padding=1)
+        self.convup4 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2, 96, 3, padding=1)
         self.batchnorm4 = nn.BatchNorm2d(96)
         self.upsamplingconv4 = torch.nn.ConvTranspose2d(96, 96, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup5 = nn.Conv2d(96, 96, 3, padding=1)
+        self.convup5 = nn.Conv2d(96 * 2, 96, 3, padding=1)
         self.batchnorm5 = nn.BatchNorm2d(96)
         self.upsamplingconv5 = torch.nn.ConvTranspose2d(96, 96, kernel_size=4,
                                                         stride=2,
@@ -198,7 +198,7 @@ class DenseUnet(torch.nn.Module):
     # else:
     #     up0 = self.upsamplingconv1(x)
         line0 = self.convup1(box[3])
-        up0sum = torch.add(up0, line0)
+        up0sum = torch.cat((up0, line0), dim=1)
         conv_up0 = self.convup2(up0sum)
         conv_b_up0 = self.batchnorm2(conv_up0)
         conv_b_r_up0 = self.relu(conv_b_up0)
@@ -207,7 +207,7 @@ class DenseUnet(torch.nn.Module):
         up1 = self.upsampling(conv_b_r_up0)
     # else:
     #     up1 = self.upsamplingconv2(conv_b_r_up0)
-        up1sum = torch.add(up1, box[2])
+        up1sum = torch.cat((up1, box[2]), dim=1)
         conv_up1 = self.convup3(up1sum)
         conv_b_up1 = self.batchnorm3(conv_up1)
         conv_b_r_up1 = self.relu(conv_b_up1)
@@ -216,7 +216,7 @@ class DenseUnet(torch.nn.Module):
         up2 = self.upsampling(conv_b_r_up1)
     # else:
     #     up2 = self.upsamplingconv3(conv_b_r_up1)
-        up2sum = torch.add(up2, box[1])
+        up2sum = torch.cat((up2, box[1]), dim=1)
         conv_up2 = self.convup4(up2sum)
         conv_b_up2 = self.batchnorm4(conv_up2)
         conv_b_r_up2 = self.relu(conv_b_up2)
@@ -225,7 +225,7 @@ class DenseUnet(torch.nn.Module):
         up3 = self.upsampling(conv_b_r_up2)
     # else:
     #     up3 = self.upsamplingconv4(conv_b_r_up2)
-        up3sum = torch.add(up3, box[0])
+        up3sum = torch.cat((up3, box[0]), dim=1)
         conv_up3 = self.convup5(up3sum)
         conv_b_up3 = self.batchnorm5(conv_up3)
         conv_b_r_up3 = self.relu(conv_b_up3)
