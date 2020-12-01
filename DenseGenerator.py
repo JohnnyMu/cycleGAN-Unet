@@ -16,7 +16,7 @@ class DenseBlock(torch.nn.Module):
         self.denselayer1 = ConvBlock(self.nb_filter, self.growth_rate, self.dropout)
         self.denselayer2 = ConvBlock(self.nb_filter + self.growth_rate, self.growth_rate, self.dropout)
         self.denselayer3 = ConvBlock(self.nb_filter + self.growth_rate * 2, self.growth_rate, self.dropout)
-        # self.denselayer4 = ConvBlock(self.nb_filter + self.growth_rate * 3, self.growth_rate, self.dropout)
+        self.denselayer4 = ConvBlock(self.nb_filter + self.growth_rate * 3, self.growth_rate, self.dropout)
         # self.denselayer5 = ConvBlock(self.nb_filter + self.growth_rate * 4, self.growth_rate, self.dropout)
         # self.denselayer6 = ConvBlock(self.nb_filter + self.growth_rate * 5, self.growth_rate, self.dropout)
     def forward(self, x):
@@ -28,8 +28,8 @@ class DenseBlock(torch.nn.Module):
         shortcut = torch.cat((shortcut, x), dim=1)
         x = self.denselayer3(shortcut)
         shortcut = torch.cat((shortcut, x), dim=1)
-        # x = self.denselayer4(shortcut)
-        # shortcut = torch.cat((shortcut, x), dim=1)
+        x = self.denselayer4(shortcut)
+        shortcut = torch.cat((shortcut, x), dim=1)
         # x = self.denselayer5(shortcut)
         # shortcut = torch.cat((shortcut, x), dim=1)
         # x = self.denselayer6(shortcut)
@@ -117,13 +117,13 @@ class DenseUnet(torch.nn.Module):
 
         self.relu = nn.ReLU()
         self.upsampling = nn.Upsample(scale_factor=2)
-        self.convup1 = nn.Conv2d(self.nb_filter + self.growth_rate * 3 * 3, self.nb_filter + self.growth_rate * 3 * 4, 1)
+        self.convup1 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 3, self.nb_filter + self.growth_rate * 4 * 4, 1)
 
-        self.convup2 = nn.Conv2d(self.nb_filter + self.growth_rate * 3 * 4, self.nb_filter + self.growth_rate * 3 * 2, 3, padding=1)
-        self.batchnorm2 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 3 * 2)
-        self.convup3 = nn.Conv2d(self.nb_filter + self.growth_rate * 3 * 2, self.nb_filter + self.growth_rate * 3, 3, padding=1)
-        self.batchnorm3 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 3)
-        self.convup4 = nn.Conv2d(self.nb_filter + self.growth_rate * 3, 96, 3, padding=1)
+        self.convup2 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 4, self.nb_filter + self.growth_rate * 4 * 2, 3, padding=1)
+        self.batchnorm2 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4 * 2)
+        self.convup3 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2, self.nb_filter + self.growth_rate * 4, 3, padding=1)
+        self.batchnorm3 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4)
+        self.convup4 = nn.Conv2d(self.nb_filter + self.growth_rate * 4, 96, 3, padding=1)
         self.batchnorm4 = nn.BatchNorm2d(96)
         self.convup5 = nn.Conv2d(96, 96, 3, padding=1)
         self.batchnorm5 = nn.BatchNorm2d(96)
@@ -133,13 +133,14 @@ class DenseUnet(torch.nn.Module):
         self.convout = nn.Conv2d(64, output_channel, 1)
 
         self.denseblock1 = DenseBlock(self.nb_filter, self.growth_rate, self.nb_layer, self.dropout)
-        self.transition1 = TransitionBlock(self.nb_filter + self.growth_rate * 3, maxpool=maxpool)
-        self.denseblock2 = DenseBlock(self.nb_filter + self.growth_rate * 3, self.growth_rate, self.nb_layer, self.dropout)
-        self.transition2 = TransitionBlock(self.nb_filter + self.growth_rate * 3 * 2, maxpool=maxpool)
-        self.denseblock3 = DenseBlock(self.nb_filter + self.growth_rate * 3 * 2, self.growth_rate, self.nb_layer, self.dropout)
-        self.transition3 = TransitionBlock(self.nb_filter + self.growth_rate * 3 * 3, maxpool=maxpool)
-        self.denseblock4 = DenseBlock(self.nb_filter + self.growth_rate * 3 * 3, self.growth_rate, self.nb_layer, self.dropout)
-        self.batchnormdown1 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 3 * 4)
+        self.transition1 = TransitionBlock(self.nb_filter + self.growth_rate * 4, maxpool=maxpool)
+        self.denseblock2 = DenseBlock(self.nb_filter + self.growth_rate * 4, self.growth_rate, self.nb_layer, self.dropout)
+        self.transition2 = TransitionBlock(self.nb_filter + self.growth_rate * 4 * 2, maxpool=maxpool)
+        self.denseblock3 = DenseBlock(self.nb_filter + self.growth_rate * 4 * 2, self.growth_rate, self.nb_layer, self.dropout)
+        self.transition3 = TransitionBlock(self.nb_filter + self.growth_rate * 4 * 3, maxpool=maxpool)
+        self.denseblock4 = DenseBlock(self.nb_filter + self.growth_rate * 4 * 3, self.growth_rate, self.nb_layer, self.dropout)
+        self.batchnormdown1 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4 * 4)
+        self.tanh = nn.Tanh()
     def forward(self, x):
         box = []
         ####### down
@@ -207,6 +208,7 @@ class DenseUnet(torch.nn.Module):
         conv_b_r_up4 = self.relu(conv_b_up4)
 
         x = self.convout(conv_b_r_up4)
+        x = self.tanh(x)
 
         return x
 
