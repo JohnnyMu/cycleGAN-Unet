@@ -122,19 +122,19 @@ class DenseUnet(torch.nn.Module):
                                                        self.nb_filter + self.growth_rate * 4 * 4, kernel_size=4, stride=2,
                                                        padding=1)
         self.convup1 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 3, self.nb_filter + self.growth_rate * 4 * 4, 1)
-        self.convup2 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 4 * 2, self.nb_filter + self.growth_rate * 4 * 2, 3, padding=1)
+        self.convup2 = nn.Conv2d((self.nb_filter + self.growth_rate * 4 * 4) * 2, self.nb_filter + self.growth_rate * 4 * 2, 3, padding=1)
         self.batchnorm2 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4 * 2)
         self.upsamplingconv2 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4 * 2,
                                                         self.nb_filter + self.growth_rate * 4 * 2, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup3 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2 * 2, self.nb_filter + self.growth_rate * 4, 3, padding=1)
+        self.convup3 = nn.Conv2d((self.nb_filter + self.growth_rate * 4 * 2) * 2, self.nb_filter + self.growth_rate * 4, 3, padding=1)
         self.batchnorm3 = nn.BatchNorm2d(self.nb_filter + self.growth_rate * 4)
         self.upsamplingconv3 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4,
                                                         self.nb_filter + self.growth_rate * 4, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup4 = nn.Conv2d(self.nb_filter + self.growth_rate * 4 * 2, 96, 3, padding=1)
+        self.convup4 = nn.Conv2d((self.nb_filter + self.growth_rate * 4) * 2, 96, 3, padding=1)
         self.batchnorm4 = nn.BatchNorm2d(96)
         self.upsamplingconv4 = torch.nn.ConvTranspose2d(96, 96, kernel_size=4,
                                                         stride=2,
@@ -144,7 +144,7 @@ class DenseUnet(torch.nn.Module):
         self.upsamplingconv5 = torch.nn.ConvTranspose2d(96, 96, kernel_size=4,
                                                         stride=2,
                                                         padding=1)
-        self.convup6 = nn.Conv2d(96,64, 3, padding=1)
+        self.convup6 = nn.Conv2d(96, 64, 3, padding=1)
         self.dropout6 = nn.Dropout(0.3)
         self.batchnorm6 = nn.BatchNorm2d(64)
         self.convout = nn.Conv2d(64, output_channel, 1)
