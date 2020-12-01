@@ -56,7 +56,7 @@ class ConvBlock(torch.nn.Module):
         self.dropout = dropout
         self.interChannel = 4 * output_channel
         self.batchnorm1 = nn.BatchNorm2d(input_channel)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.LeakyReLU(0.01)
 
         self.conv1 = nn.Conv2d(input_channel, self.interChannel, 1)
         self.dropoutlayer = nn.Dropout(dropout)
@@ -81,7 +81,7 @@ class TransitionBlock(torch.nn.Module):
         super(TransitionBlock, self).__init__()
 
         self.batchnorm = nn.BatchNorm2d(nb_filter)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.LeakyReLU(0.01)
         self.conv = nn.Conv2d(nb_filter, nb_filter, 1)
         self.dropout = dropout
         self.dropoutlayer = nn.Dropout(dropout)
@@ -115,7 +115,7 @@ class DenseUnet(torch.nn.Module):
         self.maxpooling1 = nn.MaxPool2d(2, 2)
         self.convdown = nn.Conv2d(self.nb_filter, self.nb_filter, 3, 2, 1)
 
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU(0.01)
         self.upsampling = nn.Upsample(scale_factor=2)
 
         self.upsamplingconv1 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4 * 4,
@@ -193,47 +193,47 @@ class DenseUnet(torch.nn.Module):
         box.append(x)#4*4*864
 
         #######  up
-        if self.maxpool:
-            up0 = self.upsampling(x) #8*8*864
-        else:
-            up0 = self.upsamplingconv1(x)
+    # if self.maxpool:
+        up0 = self.upsampling(x) #8*8*864
+    # else:
+    #     up0 = self.upsamplingconv1(x)
         line0 = self.convup1(box[3])
         up0sum = torch.add(up0, line0)
         conv_up0 = self.convup2(up0sum)
         conv_b_up0 = self.batchnorm2(conv_up0)
         conv_b_r_up0 = self.relu(conv_b_up0)
 
-        if self.maxpool:
-            up1 = self.upsampling(conv_b_r_up0)
-        else:
-            up1 = self.upsamplingconv2(conv_b_r_up0)
+    # if self.maxpool:
+        up1 = self.upsampling(conv_b_r_up0)
+    # else:
+    #     up1 = self.upsamplingconv2(conv_b_r_up0)
         up1sum = torch.add(up1, box[2])
         conv_up1 = self.convup3(up1sum)
         conv_b_up1 = self.batchnorm3(conv_up1)
         conv_b_r_up1 = self.relu(conv_b_up1)
 
-        if self.maxpool:
-            up2 = self.upsampling(conv_b_r_up1)
-        else:
-            up2 = self.upsamplingconv3(conv_b_r_up1)
+    # if self.maxpool:
+        up2 = self.upsampling(conv_b_r_up1)
+    # else:
+    #     up2 = self.upsamplingconv3(conv_b_r_up1)
         up2sum = torch.add(up2, box[1])
         conv_up2 = self.convup4(up2sum)
         conv_b_up2 = self.batchnorm4(conv_up2)
         conv_b_r_up2 = self.relu(conv_b_up2)
 
-        if self.maxpool:
-            up3 = self.upsampling(conv_b_r_up2)
-        else:
-            up3 = self.upsamplingconv4(conv_b_r_up2)
+    # if self.maxpool:
+        up3 = self.upsampling(conv_b_r_up2)
+    # else:
+    #     up3 = self.upsamplingconv4(conv_b_r_up2)
         up3sum = torch.add(up3, box[0])
         conv_up3 = self.convup5(up3sum)
         conv_b_up3 = self.batchnorm5(conv_up3)
         conv_b_r_up3 = self.relu(conv_b_up3)
 
-        if self.maxpool:
-            up4 = self.upsampling(conv_b_r_up3)
-        else:
-            up4 = self.upsamplingconv5(conv_b_r_up3)
+    # if self.maxpool:
+        up4 = self.upsampling(conv_b_r_up3)
+    # else:
+    #     up4 = self.upsamplingconv5(conv_b_r_up3)
         conv_up4 = self.convup6(up4)
         conv_d_up4 = self.dropout6(conv_up4)
         conv_b_up4 = self.batchnorm6(conv_d_up4)
