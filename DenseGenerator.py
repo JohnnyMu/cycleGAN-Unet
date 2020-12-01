@@ -56,7 +56,7 @@ class ConvBlock(torch.nn.Module):
         self.dropout = dropout
         self.interChannel = 4 * output_channel
         self.batchnorm1 = nn.BatchNorm2d(input_channel)
-        self.relu = nn.LeakyReLU(0.01)
+        self.relu = nn.ReLU()
 
         self.conv1 = nn.Conv2d(input_channel, self.interChannel, 1)
         self.dropoutlayer = nn.Dropout(dropout)
@@ -81,7 +81,7 @@ class TransitionBlock(torch.nn.Module):
         super(TransitionBlock, self).__init__()
 
         self.batchnorm = nn.BatchNorm2d(nb_filter)
-        self.relu = nn.LeakyReLU(0.01)
+        self.relu = nn.ReLU()
         self.conv = nn.Conv2d(nb_filter, nb_filter, 1)
         self.dropout = dropout
         self.dropoutlayer = nn.Dropout(dropout)
@@ -115,7 +115,7 @@ class DenseUnet(torch.nn.Module):
         self.maxpooling1 = nn.MaxPool2d(2, 2)
         self.convdown = nn.Conv2d(self.nb_filter, self.nb_filter, 3, 2, 1)
 
-        self.relu = nn.LeakyReLU(0.01)
+        self.relu = nn.ReLU()
         self.upsampling = nn.Upsample(scale_factor=2)
 
         self.upsamplingconv1 = torch.nn.ConvTranspose2d(self.nb_filter + self.growth_rate * 4 * 4,
