@@ -107,7 +107,7 @@ class DenseNet2D(nn.Module):
         self.concat = concat
         self.dropout = dropout
         self.dropout1 = nn.Dropout(p=prob)
-
+        self.tanh = nn.Tanh()
     def forward(self, x):
         self.x1 = self.down_block1(x)
         self.x2 = self.down_block2(self.x1)
@@ -122,5 +122,5 @@ class DenseNet2D(nn.Module):
             out = self.out_conv1(self.dropout1(self.x9))
         else:
             out = self.out_conv1(self.x9)
-        out = nn.Tanh(out)
+        out = self.tanh(out)
         return out
