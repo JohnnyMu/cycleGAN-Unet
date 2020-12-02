@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class DenseNet2D_down_block(nn.Module):
-    def __init__(self, input_channels, output_channels, down_size, dropout=False, prob=0):
+    def __init__(self, input_channels, output_channels, down_size, dropout=False, prob=0, maxpool=True):
         super(DenseNet2D_down_block, self).__init__()
         self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
         self.conv21 = nn.Conv2d(input_channels + output_channels, output_channels, kernel_size=(1, 1),
@@ -13,18 +13,22 @@ class DenseNet2D_down_block(nn.Module):
         self.conv31 = nn.Conv2d(input_channels + 2 * output_channels, output_channels, kernel_size=(1, 1),
                                 padding=(0, 0))
         self.conv32 = nn.Conv2d(output_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
+        self.conv_down = nn.Conv2d(input_channels, input_channels, 3, 2, 1)
         self.max_pool = nn.MaxPool2d((2, 2))
         self.relu = nn.LeakyReLU()
         self.down_size = down_size
         self.dropout = dropout
+        self.maxpool = maxpool
         self.dropout1 = nn.Dropout(p=prob)
         self.dropout2 = nn.Dropout(p=prob)
         self.dropout3 = nn.Dropout(p=prob)
 
     def forward(self, x):
         if self.down_size != None:
-            x = self.max_pool(x)
-
+            if self.maxpool:
+                x = self.max_pool(x)
+            else:
+                x = self.conv_down(x)
         if self.dropout:
             x1 = self.relu(self.dropout1(self.conv1(x)))
             x21 = torch.cat((x, x1), dim=1)
@@ -72,19 +76,19 @@ class DenseNet2D_up_block_concat(nn.Module):
 
 
 class DenseNet2D(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3, channel_size=16, concat=True, dropout=False, prob=0):
+    def __init__(self, in_channels=3, out_channels=3, channel_size=16, concat=True, dropout=False, prob=0, maxpool=True):
         super(DenseNet2D, self).__init__()
 
         self.down_block1 = DenseNet2D_down_block(input_channels=in_channels, output_channels=channel_size,
-                                                 down_size=None, dropout=dropout, prob=prob)
+                                                 down_size=None, dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block2 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
-                                                 down_size=(2, 2), dropout=dropout, prob=prob)
+                                                 down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block3 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
-                                                 down_size=(2, 2), dropout=dropout, prob=prob)
+                                                 down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block4 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
-                                                 down_size=(2, 2), dropout=dropout, prob=prob)
+                                                 down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block5 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
-                                                 down_size=(2, 2), dropout=dropout, prob=prob)
+                                                 down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
 
         self.up_block1 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size,
                                                     output_channels=channel_size, up_stride=(2, 2), dropout=dropout,
@@ -118,5 +122,5 @@ class DenseNet2D(nn.Module):
             out = self.out_conv1(self.dropout1(self.x9))
         else:
             out = self.out_conv1(self.x9)
-
+        out = nn.Tanh(out)
         return out

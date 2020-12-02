@@ -112,8 +112,8 @@ if opt.g_type == 7:
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if opt.g_type == 8:
-    G_AB = DenseNet2D(opt.channels, opt.channels)
-    G_BA = DenseNet2D(opt.channels, opt.channels)
+    G_AB = DenseNet2D(opt.channels, opt.channels, maxpool=opt.maxpool)
+    G_BA = DenseNet2D(opt.channels, opt.channels, maxpool=opt.maxpool)
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
