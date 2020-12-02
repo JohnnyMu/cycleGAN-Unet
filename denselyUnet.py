@@ -10,7 +10,7 @@ class denselyUnet(nn.Module):
 
         self.conv1_1 = nn.Conv2d(input_channel, filter[0], 3, 1, 1)
         self.BatchNorm1_1 = nn.BatchNorm2d(filter[0])
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=True)
         self.conv1_2 = nn.Conv2d(filter[0], filter[0], 3, 1, 1)
         self.drop1_2 = nn.Dropout(0)
         # Merge1 = merge([conv1_1, drop1_2], mode='concat', concat_axis=3)

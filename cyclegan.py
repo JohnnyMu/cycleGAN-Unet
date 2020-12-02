@@ -21,6 +21,8 @@ from discriminator import *
 from DenseGenerator import *
 from newGenerator import *
 from denselyUnet import *
+from denseUnetK import *
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -30,8 +32,8 @@ parser.add_argument("--epoch", type=int, default=0, help="epoch to start trainin
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--dataset_name", type=str, default="monet2photo", help="name of the dataset")
 parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
-parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate")
-parser.add_argument("--d_lr", type=float, default=0.0001, help="adam: learning rate")
+parser.add_argument("--lr", type=float, default=0.001, help="adam: learning rate")
+parser.add_argument("--d_lr", type=float, default=0.001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
@@ -55,6 +57,7 @@ print(opt)
 
 # Create sample and checkpoint directories
 os.makedirs("images/%s" % opt.dataset_name, exist_ok=True)
+os.makedirs("images/models/%s" % opt.dataset_name, exist_ok=True)
 os.makedirs("saved_models/%s" % opt.dataset_name, exist_ok=True)
 
 # Losses
@@ -106,6 +109,11 @@ if opt.g_type == 6:
 if opt.g_type == 7:
     G_AB = denselyUnet(opt.channels, opt.channels)
     G_BA = denselyUnet(opt.channels, opt.channels)
+    G_AB.apply(weights_init_normal)
+    G_BA.apply(weights_init_normal)
+if opt.g_type == 8:
+    G_AB = DenseNet2D(opt.channels, opt.channels)
+    G_BA = DenseNet2D(opt.channels, opt.channels)
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
@@ -188,7 +196,7 @@ val_dataloader = DataLoader(
 )
 
 
-def sample_images(batches_done):
+def sample_images(batches_done, batch=True):
     """Saves a generated sample from the test set"""
     imgs = next(iter(val_dataloader))
     G_AB.eval()
@@ -204,7 +212,10 @@ def sample_images(batches_done):
     fake_B = make_grid(fake_B, nrow=5, normalize=True)
     # Arange images along y-axis
     image_grid = torch.cat((real_A, fake_B, real_B, fake_A), 1)
-    save_image(image_grid, "images/%s/%s.png" % (opt.dataset_name, batches_done), normalize=False)
+    if batch:
+        save_image(image_grid, "images/%s/%s.png" % (opt.dataset_name, batches_done), normalize=False)
+    else:
+        save_image(image_grid, "images/models/%s/%s.png" % (opt.dataset_name, batches_done), normalize=False)
 
 
 # ----------
@@ -337,6 +348,7 @@ if __name__ == '__main__':
 
         if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
             # Save model checkpoints
+            sample_images(epoch, False)
             torch.save(G_AB.state_dict(), "saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, epoch))
             torch.save(G_BA.state_dict(), "saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, epoch))
             torch.save(D_A.state_dict(), "saved_models/%s/D_A_%d.pth" % (opt.dataset_name, epoch))
