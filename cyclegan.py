@@ -8,6 +8,7 @@ import time
 
 import torchvision.transforms as transforms
 from torchvision.utils import save_image, make_grid
+from tensorboardX import SummaryWriter
 
 from torch.utils.data import DataLoader
 from torchvision import datasets
@@ -68,6 +69,8 @@ criterion_identity = torch.nn.L1Loss()
 cuda = torch.cuda.is_available()
 
 input_shape = (opt.channels, opt.img_height, opt.img_width)
+
+writer = SummaryWriter()
 
 # Initialize generator and discriminator
 if opt.g_type == 1:
@@ -265,9 +268,11 @@ if __name__ == '__main__':
             loss_cycle_B = criterion_cycle(recov_B, real_B)
 
             loss_cycle = (loss_cycle_A + loss_cycle_B) / 2
-
+            writer.add_scalar('saved_models/cycle_loss', loss_cycle.item(), epoch * len(dataloader))
+            writer.add_scalar('saved_models/identity_loss', loss_identity.item(), epoch * len(dataloader))
             # Total loss
             loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity
+            writer.add_scalar('saved_models/G_loss', loss_G.item(), epoch * len(dataloader))
 
             loss_G.backward()
             optimizer_G.step()
@@ -309,7 +314,7 @@ if __name__ == '__main__':
             optimizer_D_B.step()
 
             loss_D = (loss_D_A + loss_D_B) / 2
-
+            writer.add_scalar('saved_models/D_loss', loss_D.item(), (i + epoch * len(dataloader)))
             # --------------
             #  Log Progress
             # --------------

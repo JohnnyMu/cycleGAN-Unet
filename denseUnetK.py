@@ -7,6 +7,7 @@ class DenseNet2D_down_block(nn.Module):
     def __init__(self, input_channels, output_channels, down_size, dropout=False, prob=0, maxpool=True):
         super(DenseNet2D_down_block, self).__init__()
         self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
+        self.instancenorm = nn.InstanceNorm2d(output_channels)
         self.conv21 = nn.Conv2d(input_channels + output_channels, output_channels, kernel_size=(1, 1),
                                 padding=(0, 0))
         self.conv22 = nn.Conv2d(output_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
@@ -30,17 +31,17 @@ class DenseNet2D_down_block(nn.Module):
             else:
                 x = self.conv_down(x)
         if self.dropout:
-            x1 = self.relu(self.dropout1(self.conv1(x)))
+            x1 = self.relu(self.dropout1(self.instancenorm(self.conv1(x))))
             x21 = torch.cat((x, x1), dim=1)
-            x22 = self.relu(self.dropout2(self.conv22(self.conv21(x21))))
+            x22 = self.relu(self.dropout2(self.instancenorm(self.conv22(self.conv21(x21)))))
             x31 = torch.cat((x21, x22), dim=1)
-            out = self.relu(self.dropout3(self.conv32(self.conv31(x31))))
+            out = self.relu(self.dropout3(self.instancenorm(self.conv32(self.conv31(x31)))))
         else:
-            x1 = self.relu(self.conv1(x))
+            x1 = self.relu(self.instancenorm(self.conv1(x)))
             x21 = torch.cat((x, x1), dim=1)
-            x22 = self.relu(self.conv22(self.conv21(x21)))
+            x22 = self.relu(self.instancenorm(self.conv22(self.conv21(x21))))
             x31 = torch.cat((x21, x22), dim=1)
-            out = self.relu(self.conv32(self.conv31(x31)))
+            out = self.relu(self.instancenorm(self.conv32(self.conv31(x31))))
 
         return out
 
@@ -51,6 +52,7 @@ class DenseNet2D_up_block_concat(nn.Module):
         self.conv11 = nn.Conv2d(skip_channels + input_channels, output_channels, kernel_size=(1, 1),
                                 padding=(0, 0))
         self.conv12 = nn.Conv2d(output_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
+        self.instancenorm = nn.InstanceNorm2d(output_channels)
         self.conv21 = nn.Conv2d(skip_channels + input_channels + output_channels, output_channels,
                                 kernel_size=(1, 1), padding=(0, 0))
         self.conv22 = nn.Conv2d(output_channels, output_channels, kernel_size=(3, 3), padding=(1, 1))
@@ -64,13 +66,13 @@ class DenseNet2D_up_block_concat(nn.Module):
         x = nn.functional.interpolate(x, scale_factor=self.up_stride, mode='nearest')
         x = torch.cat((x, prev_feature_map), dim=1)
         if self.dropout:
-            x1 = self.relu(self.dropout1(self.conv12(self.conv11(x))))
+            x1 = self.relu(self.dropout1(self.instancenorm(self.conv12(self.conv11(x)))))
             x21 = torch.cat((x, x1), dim=1)
-            out = self.relu(self.dropout2(self.conv22(self.conv21(x21))))
+            out = self.relu(self.dropout2(self.instancenorm(self.conv22(self.conv21(x21)))))
         else:
-            x1 = self.relu(self.conv12(self.conv11(x)))
+            x1 = self.relu(self.instancenorm(self.conv12(self.conv11(x))))
             x21 = torch.cat((x, x1), dim=1)
-            out = self.relu(self.conv22(self.conv21(x21)))
+            out = self.relu(self.instancenorm(self.conv22(self.conv21(x21))))
 
         return out
 
