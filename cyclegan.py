@@ -49,12 +49,13 @@ parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss w
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
 parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
 parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 false")
-parser.add_argument("--maxpool", type=bool, default=True, help="1 true 2 false")
-parser.add_argument("--dropout", type=bool, default=True, help="1 true 2 false")
+parser.add_argument("--maxpool", type=str, default='True', help="1 true 2 false")
+parser.add_argument("--dropout", type=str, default='True', help="1 true 2 false")
 
 
 opt = parser.parse_args()
 print(opt)
+print(opt.maxpool)
 
 # Create sample and checkpoint directories
 os.makedirs("images/%s" % opt.dataset_name, exist_ok=True)
@@ -115,8 +116,8 @@ if opt.g_type == 7:
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if opt.g_type == 8:
-    G_AB = DenseNet2D(opt.channels, opt.channels, maxpool=opt.maxpool)
-    G_BA = DenseNet2D(opt.channels, opt.channels, maxpool=opt.maxpool)
+    G_AB = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'))
+    G_BA = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'))
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
