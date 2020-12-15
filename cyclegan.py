@@ -168,8 +168,8 @@ fake_B_buffer = ReplayBuffer()
 # Image transformations
 if opt.channels == 3:
     transforms_ = [
-        transforms.Resize((opt.img_height, opt.img_width), Image.BICUBIC),
-        # transforms.RandomCrop((opt.img_height, opt.img_width)),
+        transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
+        transforms.RandomCrop((opt.img_height, opt.img_width)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
