@@ -83,25 +83,25 @@ class DenseNet2D(nn.Module):
 
         self.down_block1 = DenseNet2D_down_block(input_channels=in_channels, output_channels=channel_size,
                                                  down_size=None, dropout=dropout, prob=prob, maxpool=maxpool)
-        self.down_block2 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
+        self.down_block2 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size*2,
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
-        self.down_block3 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
+        self.down_block3 = DenseNet2D_down_block(input_channels=channel_size * 2, output_channels=channel_size*4,
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
-        self.down_block4 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
+        self.down_block4 = DenseNet2D_down_block(input_channels=channel_size*4, output_channels=channel_size*8,
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
-        self.down_block5 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size,
+        self.down_block5 = DenseNet2D_down_block(input_channels=channel_size*8, output_channels=channel_size*16,
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
 
-        self.up_block1 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size,
-                                                    output_channels=channel_size, up_stride=(2, 2), dropout=dropout,
+        self.up_block1 = DenseNet2D_up_block_concat(skip_channels=channel_size*8, input_channels=channel_size*16,
+                                                    output_channels=channel_size*8, up_stride=(2, 2), dropout=dropout,
                                                     prob=prob)
-        self.up_block2 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size,
-                                                    output_channels=channel_size, up_stride=(2, 2), dropout=dropout,
+        self.up_block2 = DenseNet2D_up_block_concat(skip_channels=channel_size*4, input_channels=channel_size*8,
+                                                    output_channels=channel_size*4, up_stride=(2, 2), dropout=dropout,
                                                     prob=prob)
-        self.up_block3 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size,
-                                                    output_channels=channel_size, up_stride=(2, 2), dropout=dropout,
+        self.up_block3 = DenseNet2D_up_block_concat(skip_channels=channel_size*2, input_channels=channel_size*4,
+                                                    output_channels=channel_size*2, up_stride=(2, 2), dropout=dropout,
                                                     prob=prob)
-        self.up_block4 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size,
+        self.up_block4 = DenseNet2D_up_block_concat(skip_channels=channel_size, input_channels=channel_size*2,
                                                     output_channels=channel_size, up_stride=(2, 2), dropout=dropout,
                                                     prob=prob)
 
