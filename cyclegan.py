@@ -23,6 +23,7 @@ from DenseGenerator import *
 from newGenerator import *
 from denselyUnet import *
 from denseUnetK import *
+from vgg19 import *
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,6 +48,7 @@ parser.add_argument("--checkpoint_interval", type=int, default=-1, help="interva
 parser.add_argument("--n_residual_blocks", type=int, default=5, help="number of residual blocks in generator")
 parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
 parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
+parser.add_argument("--lambda_id_vgg", type=float, default=5.0, help="identity loss weight")
 parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
 parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 false")
 parser.add_argument("--maxpool", type=str, default='True', help="1 true 2 false")
@@ -68,6 +70,14 @@ criterion_cycle = torch.nn.L1Loss()
 criterion_identity = torch.nn.L1Loss()
 
 cuda = torch.cuda.is_available()
+
+#vgg
+if opt.lambda_id_vgg != 0:
+    vgg = feature_net(model='vgg', n_classes=4)
+    if cuda:
+        vgg = vgg.cuda()
+    vgg.load_state_dict(torch.load('net_ 48.pth'))
+
 
 input_shape = (opt.channels, opt.img_height, opt.img_width)
 
@@ -248,16 +258,23 @@ if __name__ == '__main__':
 
             optimizer_G.zero_grad()
 
+            fake_B = G_AB(real_A)
+            fake_A = G_BA(real_B)
             # Identity loss
             loss_id_A = criterion_identity(G_BA(real_A), real_A)
             loss_id_B = criterion_identity(G_AB(real_B), real_B)
 
             loss_identity = (loss_id_A + loss_id_B) / 2
 
+            # Sematic loss
+            if opt.lambda_id_vgg != 0:
+                loss_sematic_A = criterion_identity(vgg.feature[0][11](fake_A), vgg.feature[0][11](real_A))
+                loss_sematic_B = criterion_identity(vgg.feature[0][11](fake_B), vgg.feature[0][11](real_B))
+
+                loss_sematic = (loss_sematic_A + loss_sematic_B) / 2
+
             # GAN loss
-            fake_B = G_AB(real_A)
             loss_GAN_AB = criterion_GAN(D_B(fake_B), valid)
-            fake_A = G_BA(real_B)
             loss_GAN_BA = criterion_GAN(D_A(fake_A), valid)
 
             loss_GAN = (loss_GAN_AB + loss_GAN_BA) / 2
@@ -272,7 +289,10 @@ if __name__ == '__main__':
             writer.add_scalar('saved_models/cycle_loss', loss_cycle.item(), epoch * len(dataloader))
             writer.add_scalar('saved_models/identity_loss', loss_identity.item(), epoch * len(dataloader))
             # Total loss
-            loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity
+            if opt.lambda_id_vgg != 0:
+                loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity + opt.lambda_id_vgg * loss_sematic
+            else:
+                loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity
             writer.add_scalar('saved_models/G_loss', loss_G.item(), epoch * len(dataloader))
 
             loss_G.backward()
@@ -327,21 +347,39 @@ if __name__ == '__main__':
             prev_time = time.time()
 
             # Print log
-            sys.stdout.write(
-                "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f] ETA: %s"
-                % (
-                    epoch,
-                    opt.n_epochs,
-                    i,
-                    len(dataloader),
-                    loss_D.item(),
-                    loss_G.item(),
-                    loss_GAN.item(),
-                    loss_cycle.item(),
-                    loss_identity.item(),
-                    time_left,
+            if opt.lambda_id_vgg != 0:
+                sys.stdout.write(
+                    "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f, sematic: %f] ETA: %s"
+                    % (
+                        epoch,
+                        opt.n_epochs,
+                        i,
+                        len(dataloader),
+                        loss_D.item(),
+                        loss_G.item(),
+                        loss_GAN.item(),
+                        loss_cycle.item(),
+                        loss_identity.item(),
+                        loss_sematic.item(),
+                        time_left,
+                    )
                 )
-            )
+            else:
+                sys.stdout.write(
+                    "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f] ETA: %s"
+                    % (
+                        epoch,
+                        opt.n_epochs,
+                        i,
+                        len(dataloader),
+                        loss_D.item(),
+                        loss_G.item(),
+                        loss_GAN.item(),
+                        loss_cycle.item(),
+                        loss_identity.item(),
+                        time_left,
+                    )
+                )
 
             # If at sample interval save image
             if batches_done % opt.sample_interval == 0:
