@@ -73,10 +73,10 @@ cuda = torch.cuda.is_available()
 
 #vgg
 if opt.lambda_id_vgg != 0:
-    vgg = feature_net(model='vgg', n_classes=4)
+    vgg = feature_net(model='vgg', n_classes=2)
     if cuda:
         vgg = vgg.cuda()
-    vgg.load_state_dict(torch.load('net_ 48.pth'))
+    vgg.load_state_dict(torch.load('../drive/MyDrive/net_  3.pth'))
 
 
 input_shape = (opt.channels, opt.img_height, opt.img_width)
@@ -290,7 +290,7 @@ if __name__ == '__main__':
             writer.add_scalar('saved_models/identity_loss', loss_identity.item(), epoch * len(dataloader))
             # Total loss
             if opt.lambda_id_vgg != 0:
-                loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity + opt.lambda_id_vgg * loss_sematic
+                loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id_vgg * loss_sematic
             else:
                 loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity
             writer.add_scalar('saved_models/G_loss', loss_G.item(), epoch * len(dataloader))
