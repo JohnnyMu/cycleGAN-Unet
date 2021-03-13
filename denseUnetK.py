@@ -77,10 +77,28 @@ class DenseNet2D_up_block_concat(nn.Module):
         return out
 
 
+class ResidualBlock(nn.Module):
+    def __init__(self, in_features):
+        super(ResidualBlock, self).__init__()
+
+        self.block = nn.Sequential(
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(in_features, in_features, 3),
+            nn.InstanceNorm2d(in_features),
+            nn.ReLU(inplace=True),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(in_features, in_features, 3),
+            nn.InstanceNorm2d(in_features),
+        )
+
+    def forward(self, x):
+        return x + self.block(x)
+
 class DenseNet2D(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3, channel_size=16, concat=True, dropout=False, prob=0, maxpool=True):
+    def __init__(self, in_channels=3, out_channels=3, channel_size=16, concat=True, dropout=False, prob=0, maxpool=True, resblock=False):
         super(DenseNet2D, self).__init__()
 
+        self.resblock = resblock
         self.down_block1 = DenseNet2D_down_block(input_channels=in_channels, output_channels=channel_size,
                                                  down_size=None, dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block2 = DenseNet2D_down_block(input_channels=channel_size, output_channels=channel_size*2,
@@ -91,7 +109,7 @@ class DenseNet2D(nn.Module):
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
         self.down_block5 = DenseNet2D_down_block(input_channels=channel_size*8, output_channels=channel_size*16,
                                                  down_size=(2, 2), dropout=dropout, prob=prob, maxpool=maxpool)
-
+        self.trans = ResidualBlock(channel_size*16)
         self.up_block1 = DenseNet2D_up_block_concat(skip_channels=channel_size*8, input_channels=channel_size*16,
                                                     output_channels=channel_size*8, up_stride=(2, 2), dropout=dropout,
                                                     prob=prob)
@@ -116,6 +134,8 @@ class DenseNet2D(nn.Module):
         self.x3 = self.down_block3(self.x2)
         self.x4 = self.down_block4(self.x3)
         self.x5 = self.down_block5(self.x4)
+        if self.resblock:
+            self.x5 = self.trans(self.trans(self.trans(self.x5)))
         self.x6 = self.up_block1(self.x4, self.x5)
         self.x7 = self.up_block2(self.x3, self.x6)
         self.x8 = self.up_block3(self.x2, self.x7)

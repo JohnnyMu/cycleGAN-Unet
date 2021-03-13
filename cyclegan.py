@@ -52,7 +52,9 @@ parser.add_argument("--lambda_id_vgg", type=float, default=5.0, help="identity l
 parser.add_argument("--g_type", type=float, default=1, help="1 origin 2 unet 3 unet3+")
 parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 false")
 parser.add_argument("--maxpool", type=str, default='True', help="1 true 2 false")
-parser.add_argument("--dropout", type=str, default='True', help="1 true 2 false")
+parser.add_argument("--dropout", type=float, default='0', help="1 true 2 false")
+parser.add_argument("--resblock", type=str, default='False', help="1 true 2 false")
+
 
 
 opt = parser.parse_args()
@@ -126,8 +128,8 @@ if opt.g_type == 7:
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if opt.g_type == 8:
-    G_AB = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'))
-    G_BA = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'))
+    G_AB = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'), dropout=opt.dropout, resblock=(opt.resblock=='True'))
+    G_BA = DenseNet2D(opt.channels, opt.channels, maxpool=(opt.maxpool == 'True'), dropout=opt.dropout, resblock=(opt.resblock=='True'))
     G_AB.apply(weights_init_normal)
     G_BA.apply(weights_init_normal)
 if cuda:
