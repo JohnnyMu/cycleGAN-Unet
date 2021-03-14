@@ -54,6 +54,7 @@ parser.add_argument("--is_maxpooling", type=float, default=1, help="1 true 2 fal
 parser.add_argument("--maxpool", type=str, default='True', help="1 true 2 false")
 parser.add_argument("--dropout", type=float, default='0', help="1 true 2 false")
 parser.add_argument("--resblock", type=str, default='False', help="1 true 2 false")
+parser.add_argument("--sn", type=str, default='True', help="1 true 2 false")
 
 
 
@@ -110,8 +111,14 @@ if opt.g_type == 3:
 if opt.g_type == 4:
     G_AB = GeneratorUNet3(opt.channels, opt.channels)
     G_BA = GeneratorUNet3(opt.channels, opt.channels)
-D_A = Discriminator(input_shape)
-D_B = Discriminator(input_shape)
+
+if opt.sn=="True":
+    D_A = Discriminator(input_shape, sn = True)
+    D_B = Discriminator(input_shape, sn = True)
+else:
+    D_A = Discriminator(input_shape)
+    D_B = Discriminator(input_shape)
+
 if opt.g_type == 5:
     G_AB = DenseUnet(opt.channels, opt.channels, maxpool=opt.maxpool, dropout=opt.dropout)
     G_BA = DenseUnet(opt.channels, opt.channels, maxpool=opt.maxpool, dropout=opt.dropout)
@@ -149,9 +156,12 @@ if opt.epoch != 0:
     D_B.load_state_dict(torch.load("saved_models/%s/D_B_%d.pth" % (opt.dataset_name, opt.epoch)))
 else:
     # Initialize weights
-
-    D_A.apply(weights_init_normal)
-    D_B.apply(weights_init_normal)
+    if opt.sn == 'False':
+        D_A.apply(weights_init_normal)
+        D_B.apply(weights_init_normal)
+    else:
+        init_weights_sn(D_A, 'normal', gain=0.002)
+        init_weights_sn(D_B, 'normal', gain=0.002)
 
 # Optimizers
 optimizer_G = torch.optim.Adam(

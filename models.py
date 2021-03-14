@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 from torch.nn import init
-
+from spectralNormalization import SpectralNorm
 
 
 ##############################
@@ -452,9 +452,90 @@ class GeneratorResNet(nn.Module):
 #        Discriminator
 ##############################
 
+def init_weights_sn(net, init_type='normal', gain=0.02):
+    def init_func(m):
+        classname = m.__class__.__name__
+        if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
+            if init_type == 'normal':
+                init.normal_(m.weight.data, 0.0, gain)
+            elif init_type == 'xavier':
+                init.xavier_normal_(m.weight.data, gain=gain)
+            elif init_type == 'kaiming':
+                init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+            elif init_type == 'orthogonal':
+                init.orthogonal_(m.weight.data, gain=gain)
+            else:
+                raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
+            if hasattr(m, 'bias') and m.bias is not None:
+                init.constant_(m.bias.data, 0.0)
+        elif classname.find('BatchNorm2d') != -1:
+            init.normal_(m.weight.data, 1.0, gain)
+            init.constant_(m.bias.data, 0.0)
+
+    print('initialize network with %s' % init_type)
+    net.apply(init_func)
+
+def define_D(input_nc, ndf, netD,gpu_ids,
+             n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', init_gain=0.02):
+    net = None
+    if norm=="spectral":
+        if netD == 'basic':
+            net = NLayerDiscriminatorSN(input_nc, ndf, n_layers=3, use_sigmoid=use_sigmoid)
+        elif netD == 'n_layers':
+            net = NLayerDiscriminatorSN(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid)
+    return init_net(net, gpu_ids, init_type, init_gain)
+
+def init_net(net, gpu_ids, init_type='normal', init_gain=0.02):
+    if len(gpu_ids) > 0:
+        assert(torch.cuda.is_available())
+        net.to(gpu_ids[0])
+        net = torch.nn.DataParallel(net, gpu_ids)
+    init_weights_sn(net, init_type, gain=init_gain)
+    return net
+
+class NLayerDiscriminatorSN(nn.Module):
+    def __init__(self, input_nc, ndf=64, n_layers=3, use_sigmoid=False):
+        super(NLayerDiscriminatorSN, self).__init__()
+        use_bias = False
+        kw = 4
+        padw = 1
+        sequence = [
+            SpectralNorm(nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw)),
+            nn.LeakyReLU(0.2, True)
+        ]
+
+        nf_mult = 1
+        nf_mult_prev = 1
+        for n in range(1, n_layers):
+            nf_mult_prev = nf_mult
+            nf_mult = min(2**n, 8)
+            sequence += [
+                SpectralNorm(nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
+                          kernel_size=kw, stride=2, padding=padw, bias=use_bias)),
+                nn.LeakyReLU(0.2, True)
+            ]
+
+        nf_mult_prev = nf_mult
+        nf_mult = min(2**n_layers, 8)
+        sequence += [
+            SpectralNorm(nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
+                      kernel_size=kw, stride=1, padding=padw, bias=use_bias)),
+            nn.LeakyReLU(0.2, True)
+        ]
+
+        sequence += [SpectralNorm(nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw))]
+
+        if use_sigmoid:
+            sequence += [nn.Sigmoid()]
+
+        self.model = nn.Sequential(*sequence)
+
+    def forward(self, input):
+        return self.model(input)
+
 
 class Discriminator(nn.Module):
-    def __init__(self, input_shape):
+    def __init__(self, input_shape, sn = False):
         super(Discriminator, self).__init__()
 
         channels, height, width = input_shape
@@ -464,8 +545,12 @@ class Discriminator(nn.Module):
 
         def discriminator_block(in_filters, out_filters, normalize=True):
             """Returns downsampling layers of each discriminator block"""
-            layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
-            if normalize:
+            # layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
+            # if normalize:
+            if sn:
+                layers = [(SpectralNorm(nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)))]
+            else:
+                layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
                 layers.append(nn.InstanceNorm2d(out_filters))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
